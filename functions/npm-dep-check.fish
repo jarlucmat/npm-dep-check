@@ -105,7 +105,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	function getPackages
 		if contains -- '-' $argv; or test (count $argv) -eq 0
-			while read -l line
+			while read -P "" -l line
 				echo $line
 			end
 		else
