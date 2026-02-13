@@ -12,9 +12,9 @@ function npm-dep-check --description "Checks given package names if there are pa
 	# global variables
 	#
 
-	set hit (set_color --bold red)
-	set reset (set_color normal)
-	set NPM_PACKAGE_LIST_CACHE
+	set -g hit (set_color --bold red)
+	set -g reset (set_color normal)
+	set -g NPM_PACKAGE_LIST_CACHE
 
 	#
 	# methods
@@ -33,15 +33,15 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 		set -l allDeps (echo $npmJson |\
 			# -r removes quotes from output
-		# --stream creates pairs of [[path],value] for the whole object
-		# select(has(1)) check if value exists
-		# select(...) check for specific path of version -> [["somePackage", "dependencies", "packageName", "version"], "1.0.0"]
-		# \(.[0] | length) currently not relevant but maybe later if depth info is interesting
-		jq -r --stream 'select(has(1)) | select((.[0][-3]? == "dependencies") and (.[0][-1]? == "version")) | .[0][-2] + ":" + .[1]'
+			# --stream creates pairs of [[path],value] for the whole object
+			# select(has(1)) check if value exists
+			# select(...) check for specific path of version -> [["somePackage", "dependencies", "packageName", "version"], "1.0.0"]
+			# \(.[0] | length) currently not relevant but maybe later if depth info is interesting
+			jq -r --stream 'select(has(1)) | select((.[0][-3]? == "dependencies") and (.[0][-1]? == "version")) | .[0][-2] + ":" + .[1]'
 		)
 
 		# remove duplicates and cache result
-		set NPM_PACKAGE_LIST_CACHE (echo $allDeps | string split ' ' | sort | uniq)
+		set NPM_PACKAGE_LIST_CACHE (string split ' ' -- "$allDeps" | sort | uniq)
 		echo "Found unique dependencies: $(count $NPM_PACKAGE_LIST_CACHE), of total $(count $allDeps)"
 	end
 
@@ -71,8 +71,8 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	function compareVersions
 		argparse 'search=+' 'found=+' -- $argv
-		set -l searchedVersions (string split ',' $_flag_search)
-		set -l foundVersions (string split ',' $_flag_found)
+		set -l searchedVersions (string split ',' -- $_flag_search)
+		set -l foundVersions (string split ',' -- $_flag_found)
 
 		# search for version matches
 		set -l returnCode 2
@@ -93,9 +93,8 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	# query for given packageName
 	function queryPackageVersions
-		echo "$NPM_PACKAGE_LIST_CACHE" |\
-			string split ' ' |\
-			grep -P "^$argv:" |\
+		string split ' ' -- "$NPM_PACKAGE_LIST_CACHE" |\
+			rg "^$argv:" |\
 			string split -f 2 --allow-empty ':'
 	end
 
@@ -143,13 +142,9 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -l result (findPackageVersions $package)
 		set -l code $status
 		if test $code -eq 0
-			or begin 
-				test $code -eq 1; and not set -q _flag_f; and not set -q _flag_o;
-			end
-			or begin 
-				test $code -eq 2; and not set -q _flag_o
-			end
-		echo "$result[1]: $result[2]"
+			or begin test $code -eq 1; and not set -q _flag_f; and not set -q _flag_o; end
+			or begin test $code -eq 2; and not set -q _flag_o end
+			echo "$result[1]: $result[2]"
 		end
 	end
 end
