@@ -142,9 +142,13 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -l result (findPackageVersions $package)
 		set -l code $status
 		if test $code -eq 0
-			or begin test $code -eq 1; and not set -q _flag_f; and not set -q _flag_o; end
-			or begin test $code -eq 2; and not set -q _flag_o end
-			echo "$result[1]: $result[2]"
+			or begin 
+				test $code -eq 1; and not set -q _flag_f; and not set -q _flag_o;
+			end
+			or begin 
+				test $code -eq 2; and not set -q _flag_o
+			end
+		echo "$result[1]: $result[2]"
 		end
 	end
 end
