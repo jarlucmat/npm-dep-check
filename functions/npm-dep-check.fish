@@ -12,9 +12,9 @@ function npm-dep-check --description "Checks given package names if there are pa
 	# global variables
 	#
 
-	set -g hit (set_color --bold red)
-	set -g reset (set_color normal)
-	set -g NPM_PACKAGE_LIST_CACHE
+	set -g __npmDepCheck_hit (set_color --bold red)
+	set -g __npmDepCheck_reset (set_color normal)
+	set -g __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 
 	#
 	# methods
@@ -41,8 +41,8 @@ function npm-dep-check --description "Checks given package names if there are pa
 		)
 
 		# remove duplicates and cache result
-		set NPM_PACKAGE_LIST_CACHE (string split ' ' -- "$allDeps" | sort | uniq)
-		echo "Found unique dependencies: $(count $NPM_PACKAGE_LIST_CACHE), of total $(count $allDeps)"
+		set __npmDepCheck_NPM_PACKAGE_LIST_CACHE (string split ' ' -- "$allDeps" | sort | uniq)
+		echo "Found unique dependencies: $(count $__npmDepCheck_NPM_PACKAGE_LIST_CACHE), of total $(count $allDeps)"
 	end
 
 	function findPackageVersions
@@ -80,7 +80,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 		for foundVersion in $foundVersions
 			set -l entry
 			if contains -- $foundVersion $searchedVersions
-				set entry "$hit$foundVersion (MATCH)$reset"
+				set entry "$__npmDepCheck_hit$foundVersion (MATCH)$__npmDepCheck_reset"
 				set returnCode 0
 			else
 				set entry "$foundVersion"
@@ -93,7 +93,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	# query for given packageName
 	function queryPackageVersions
-		string split ' ' -- "$NPM_PACKAGE_LIST_CACHE" |\
+		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
 			rg "^$argv:" |\
 			string split -f 2 --allow-empty ':'
 	end
@@ -151,4 +151,6 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo "$result[1]: $result[2]"
 		end
 	end
+
+	set -e __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 end
