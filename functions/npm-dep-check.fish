@@ -98,12 +98,29 @@ function npm-dep-check --description "Checks given package names if there are pa
 			string split -f 2 --allow-empty ':'
 	end
 
+	function queryAllPackages
+		set -f currentPackage (string split -f 1 ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" | string split -f 1 ':')
+		set -f currentVersions
+		for line in (string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE")
+			set -l matcher (string match -r -g "^([^:]+):(.*)\$" -- $line)
+			set -l packageName $matcher[1]
+			set -l packageVersion $matcher[2]
+			if test "$currentPackage" != "$packageName"
+				echo "$currentPackage:$(string join ',' $currentVersions)"
+				set currentPackage $packageName
+				set currentVersions
+			end
+
+			set currentVersions $currentVersions $packageVersion
+		end
+	end
+
 	function printfVersions
 		echo (string join ', ' -- $argv)
 	end
 
 	function getPackages
-		if contains -- '-' $argv; or test (count $argv) -eq 0
+		if contains -- '-' $argv;
 			while read -P "" -l line
 				echo $line
 			end
@@ -138,7 +155,8 @@ function npm-dep-check --description "Checks given package names if there are pa
 	initNpmCache
 	or return $status
 
-	for package in (getPackages $argv)
+	set -l packages (getPackages $argv)
+	for package in $packages
 		set -l result (findPackageVersions $package)
 		set -l code $status
 		if test $code -eq 0
@@ -149,6 +167,11 @@ function npm-dep-check --description "Checks given package names if there are pa
 				test $code -eq 2; and not set -q _flag_o
 			end
 		echo "$result[1]: $result[2]"
+		end
+	end
+	if test (count $packages) -eq 0
+		for param in (queryAllPackages)
+			echo $param
 		end
 	end
 
