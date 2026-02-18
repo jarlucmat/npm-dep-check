@@ -1,6 +1,6 @@
 #!/usr/bin/env fish
 
-function npm-dep-check --description "Checks given package names if there are part of your npm project. Can also handle stdin." 
+function npm-dep-check --description "Checks given package names if there are part of your npm project."
 
 	#
 	# dependency check
@@ -120,14 +120,8 @@ function npm-dep-check --description "Checks given package names if there are pa
 	end
 
 	function getPackages
-		if contains -- '-' $argv;
-			while read -P "" -l line
-				echo $line
-			end
-		else
-			for param in $argv
-				echo $param
-			end
+		for param in $argv
+			echo $param
 		end
 	end
 
@@ -139,14 +133,14 @@ function npm-dep-check --description "Checks given package names if there are pa
 	or return 1;
 
 	if set -q _flag_h;
-		echo "Usage: $(status filename) [ OPTIONS ] [ Npm package name ]..."
+		echo "Usage: $(status filename) [ OPTIONS ] [ NPM PACKAGE NAMES ]..."
 		echo -e ""
 		echo -e "OPTIONS"
 		echo -e "\t -h, --help \t\t Display this page"
 		echo -e "\t -o, --only-matches \t Show only packages with matched version numbers"
 		echo -e "\t -f, --found \t\t Show only found packages"
 		echo -e ""
-		echo -e "Npm package name"
+		echo -e "NPM PACKAGE NAMES"
 		echo -e "\t Can either be with or without version number like: typescript or typescript@1.0.0."
 		echo -e ""
 		return
