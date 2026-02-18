@@ -106,7 +106,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 			set -l packageName $matcher[1]
 			set -l packageVersion $matcher[2]
 			if test "$currentPackage" != "$packageName"
-				echo "$currentPackage:$(string join ',' $currentVersions)"
+				echo "$currentPackage@$(string join ',' $currentVersions)"
 				set currentPackage $packageName
 				set currentVersions
 			end
@@ -166,12 +166,12 @@ function npm-dep-check --description "Checks given package names if there are pa
 			or begin 
 				test $code -eq 2; and not set -q _flag_o
 			end
-		echo "$result[1]: $result[2]"
+		echo "$result[1]@$result[2]"
 		end
 	end
 	if test (count $packages) -eq 0
-		for param in (queryAllPackages)
-			echo $param
+		for package in (queryAllPackages)
+			echo $package
 		end
 	end
 
