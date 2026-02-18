@@ -94,7 +94,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 	# query for given packageName
 	function queryPackageVersions
 		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
-			rg "^$argv:" |\
+			string match -r "^$argv:.*\$" |\
 			string split -f 2 --allow-empty ':'
 	end
 
