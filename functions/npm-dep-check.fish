@@ -147,13 +147,12 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -l searchedVersions $matcher[2]
 		set -l foundPackages (queryPackageName $packageName)
 
-		set -l foundPackagesWithOptionalVersion
+		set -l foundPackagesWithOptionalVersion $foundPackages
 		if test -n "$searchedVersions"
+			set foundPackagesWithOptionalVersion
 			for p in $foundPackages
 				set -a foundPackagesWithOptionalVersion "$p@$searchedVersions"
 			end
-		else
-			set foundPackagesWithOptionalVersion $foundPackages
 		end
 		processPackages $foundPackagesWithOptionalVersion
 	end
