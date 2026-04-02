@@ -155,22 +155,19 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	function processPackages
 		for package in $argv
-			if string match -qr -- "\*" $package
-				processPackageSearch $package
-				continue
-			end
-			set -l result (findPackageVersions $package)
-			set -l code $status
-			if test $code -eq 0
-				or begin
-					test $code -eq 1; and not set -q _flag_f; and not set -q _flag_o;
-				end
-				or begin
-					test $code -eq 2; and not set -q _flag_o
-				end
-				echo "$result[1]@$result[2]"
-			end
+			echo (processPackage $package)
 		end
+	end
+
+	function processPackage
+		set -f package $argv[1]
+		if string match -qr -- "\*" $package
+			echo (processPackageSearch $package)
+			return
+		end
+		set -l result (findPackageVersions $package)
+		set -l code $status
+		echo "$result[1]@$result[2]"
 	end
 
 	function processPackageSearch
@@ -179,15 +176,15 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -l searchedVersions $matcher[2]
 		set -l foundPackages (queryPackageName $packageName)
 
-		set -l foundPackagesWithVersion
+		set -l foundPackagesWithOptionalVersion
 		if test -n "$searchedVersions"
 			for p in $foundPackages
-				set -a foundPackagesWithVersion "$p@$searchedVersions"
+				set -a foundPackagesWithOptionalVersion "$p@$searchedVersions"
 			end
 		else
-			set foundPackagesWithVersion $foundPackages
+			set foundPackagesWithOptionalVersion $foundPackages
 		end
-		processPackages $foundPackagesWithVersion
+		echo (processPackages $foundPackagesWithOptionalVersion)
 	end
 
 	#
@@ -206,7 +203,9 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo -e "\t -f, --found \t\t Show only found packages"
 		echo -e ""
 		echo -e "NPM PACKAGE NAMES"
-		echo -e "\t Can either be with or without version number like: typescript or typescript@1.0.0."
+		echo -e "\t Can either be with or without version number like: typescript or typescript@1.0.0"
+		echo -e "\t It is also possible to search for subsequences of versions: typescript@1,2.1"
+		echo -e "\t To find groups of packages it is possible to use * as wildcard: @angular/*@18. Wildcards only work for names, not version numbers"
 		echo -e ""
 		return
 	end
@@ -220,7 +219,28 @@ function npm-dep-check --description "Checks given package names if there are pa
 			echo $package
 		end
 	else
-		processPackages $packages
+		for result in (processPackages $packages)
+			# hide errors
+			if test $status -ne 0
+				continue
+			end
+
+			# hide not found packages
+			if set -q _flag_f; or set -q _flag_o
+				if string match -qe -- "NOT FOUND" $result
+					continue
+				end
+			end
+
+			# hide not matched packages
+			if set -q _flag_o
+				if not string match -qe -- "(MATCH)" $result
+					continue
+				end
+			end
+
+			echo $result
+		end
 	end
 
 	set -e __npmDepCheck_NPM_REGEX_MATCHER __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
