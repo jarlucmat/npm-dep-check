@@ -44,7 +44,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 		# remove duplicates and cache result
 		set __npmDepCheck_NPM_PACKAGE_LIST_CACHE (string split ' ' -- "$allDeps" | sort | uniq)
-		echo "Found unique dependencies: $(count $__npmDepCheck_NPM_PACKAGE_LIST_CACHE), of total $(count $allDeps)"
+		echo "Found dependencies: $(count $allDeps), unique $(count $__npmDepCheck_NPM_PACKAGE_LIST_CACHE)"
 	end
 
 	function findPackageVersions
@@ -59,16 +59,14 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo "$packageName"
 		if test -z "$foundVersions"
 			echo "NOT FOUND"
-			return 1
 		end
 
 		if test -z "$searchedVersions"
-			printfVersions $foundVersions
-			return 2
+			echo (printfVersions $foundVersions)
+		else
+			echo (compareVersions --search (string join ',' $searchedVersions) --found (string join ',' $foundVersions))
 		end
 
-		compareVersions --search (string join ',' $searchedVersions) --found (string join ',' $foundVersions)
-		return $status 
 	end
 
 	function compareVersions
@@ -80,20 +78,17 @@ function npm-dep-check --description "Checks given package names if there are pa
 		end
 
 		# search for version matches
-		set -l returnCode 2
 		set -l matchedVersions
 		for foundVersion in $foundVersions
 			set -l entry
 			if string match -qr -- (string join '|' -- $regexVersions) $foundVersion
 				set entry "$foundVersion (MATCH)"
-				set returnCode 0
 			else
 				set entry "$foundVersion"
 			end
 			set -a matchedVersions $entry
 		end
 		printfVersions $matchedVersions
-		return $returnCode
 	end
 
 	# query for given packageName
@@ -166,7 +161,6 @@ function npm-dep-check --description "Checks given package names if there are pa
 			return
 		end
 		set -l result (findPackageVersions $package)
-		set -l code $status
 		echo "$result[1]@$result[2]"
 	end
 
