@@ -2,25 +2,25 @@
 
 function npm-dep-check --description "Checks given package names if there are part of your npm project."
 
-	#
-	# dependency check
-	#
+	###
+	### dependency check
+	###
 	__npm-dep-check-dependencies
 	or return $status
 
-	#
-	# global variables
-	#
+	###
+	### global variables
+	###
 
 	set -g __npmDepCheck_hit (set_color --bold red)
 	set -g __npmDepCheck_version (set_color --bold green)
 	set -g __npmDepCheck_reset (set_color normal)
 	set -g __npmDepCheck_NPM_PACKAGE_LIST_CACHE
-	set -g __npmDepCheck_NPM_REGEX_MATCHER '^(.[^@]+)(?:@(.*))?$'
+	set -g __npmDepCheck_NPM_REGEX_MATCHER '^(.[^@]*)(?:@(.*))?$'
 
-	#
-	# methods
-	#
+	###
+	### methods
+	###
 
 	function initNpmCache
 		set -l npmJson (npm ls --all --json)
@@ -102,26 +102,8 @@ function npm-dep-check --description "Checks given package names if there are pa
 	function queryPackageName
 		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
 			string match -r "^$(string replace -a '*' '.*' -- $argv):.*\$" |\
-			string split -f 1 --allow-empty ':'
-	end
-
-	function queryAllPackages
-		set -f currentPackage (string split -f 1 ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" | string split -f 1 ':')
-		set -f currentVersions
-		for line in (string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE")
-			set -l matcher (string match -r -g "^([^:]+):(.*)\$" -- $line)
-			set -l packageName $matcher[1]
-			set -l packageVersion $matcher[2]
-			# sobald der aktuelle package name nicht mehr zusammenpasst mit dem gespeicherten
-			# gib alle gesammelten versionsnummern aus
-			if test "$currentPackage" != "$packageName"
-				echo "$currentPackage@$(printfVersions $currentVersions)"
-				set currentPackage $packageName
-				set currentVersions
-			end
-
-			set -a currentVersions $packageVersion
-		end
+			string split -f 1 --allow-empty ':' |\
+			uniq
 	end
 
 	function printfVersions
@@ -143,22 +125,16 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo (string join '\n' -- $coloredVersions)
 	end
 
-	function getPackages
-		for param in $argv
-			echo $param
-		end
-	end
-
 	function processPackages
 		for package in $argv
-			echo (processPackage $package)
+			processPackage $package
 		end
 	end
 
 	function processPackage
 		set -f package $argv[1]
 		if string match -qr -- "\*" $package
-			echo (processPackageSearch $package)
+			processPackageSearch $package
 			return
 		end
 		set -l result (findPackageVersions $package)
@@ -179,12 +155,12 @@ function npm-dep-check --description "Checks given package names if there are pa
 		else
 			set foundPackagesWithOptionalVersion $foundPackages
 		end
-		echo (processPackages $foundPackagesWithOptionalVersion)
+		processPackages $foundPackagesWithOptionalVersion
 	end
 
-	#
-	# main
-	#
+	###
+	### main
+	###
 
 	argparse 'f/found' 'o/only-matches' 'h/help' -- $argv
 	or return 1;
@@ -208,34 +184,32 @@ function npm-dep-check --description "Checks given package names if there are pa
 	initNpmCache
 	or return $status
 
-	set -l packages (getPackages $argv)
+	set -l packages $argv
 	if test (count $packages) -eq 0
-		for package in (queryAllPackages)
-			echo $package
+		set packages '*'
+	end
+
+	for result in (processPackages $packages)
+		# hide errors
+		if test $status -ne 0
+			continue
 		end
-	else
-		for result in (processPackages $packages)
-			# hide errors
-			if test $status -ne 0
+
+		# hide not found packages
+		if set -q _flag_f; or set -q _flag_o
+			if string match -qe -- "NOT FOUND" $result
 				continue
 			end
-
-			# hide not found packages
-			if set -q _flag_f; or set -q _flag_o
-				if string match -qe -- "NOT FOUND" $result
-					continue
-				end
-			end
-
-			# hide not matched packages
-			if set -q _flag_o
-				if not string match -qe -- "(MATCH)" $result
-					continue
-				end
-			end
-
-			echo $result
 		end
+
+		# hide not matched packages
+		if set -q _flag_o
+			if not string match -qe -- "(MATCH)" $result
+				continue
+			end
+		end
+
+		echo $result
 	end
 
 	set -e __npmDepCheck_NPM_REGEX_MATCHER __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
