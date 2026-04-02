@@ -59,14 +59,15 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo "$packageName"
 		if test -z "$foundVersions"
 			echo "NOT FOUND"
+			return
 		end
 
 		if test -z "$searchedVersions"
 			echo (printfVersions $foundVersions)
-		else
-			echo (compareVersions --search (string join ',' $searchedVersions) --found (string join ',' $foundVersions))
+			return
 		end
 
+		echo (compareVersions --search (string join ',' $searchedVersions) --found (string join ',' $foundVersions))
 	end
 
 	function compareVersions
