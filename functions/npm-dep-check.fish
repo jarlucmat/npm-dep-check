@@ -72,15 +72,18 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	function compareVersions
 		argparse 'search=+' 'found=+' -- $argv
-		set -l searchedVersions (string split ',' -- $_flag_search)
 		set -l foundVersions (string split ',' -- $_flag_found)
+		set -l regexVersions
+		for v in (string split ',' -- $_flag_search)
+			set -a regexVersions "^$v(\.\d+)*\$"
+		end
 
 		# search for version matches
 		set -l returnCode 2
 		set -l matchedVersions
 		for foundVersion in $foundVersions
 			set -l entry
-			if contains -- $foundVersion $searchedVersions
+			if string match -qr -- (string join '|' -- $regexVersions) $foundVersion
 				set entry "$foundVersion (MATCH)"
 				set returnCode 0
 			else
