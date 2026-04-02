@@ -127,7 +127,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -f coloredVersions
 		for v in $argv
 			set -l entry
-			if contains -- $v "(MATCH)"
+			if contains -- "(MATCH)" $v
 				set entry "$__npmDepCheck_hit$v$__npmDepCheck_reset"
 			else
 				set entry "$__npmDepCheck_version$v$__npmDepCheck_reset"
@@ -187,5 +187,5 @@ function npm-dep-check --description "Checks given package names if there are pa
 		end
 	end
 
-	set -e __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
+	set -e __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 end
