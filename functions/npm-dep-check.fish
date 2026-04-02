@@ -16,6 +16,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 	set -g __npmDepCheck_version (set_color --bold green)
 	set -g __npmDepCheck_reset (set_color normal)
 	set -g __npmDepCheck_NPM_PACKAGE_LIST_CACHE
+	set -g __npmDepCheck_NPM_REGEX_MATCHER '^(.[^@]+)(?:@(.*))?$'
 
 	#
 	# methods
@@ -50,7 +51,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -l package $argv
 
 		# split package name from version (if set)
-		set -l matcher (string match -r -g '^(.[^@]+)(?:@(.*))?$' -- $package)
+		set -l matcher (string match -r -g $__npmDepCheck_NPM_REGEX_MATCHER -- $package)
 		set -l packageName $matcher[1]
 		set -l searchedVersions (string split ',' -- $matcher[2] | string trim)
 		set -l foundVersions (queryPackageVersions $packageName)
@@ -102,6 +103,12 @@ function npm-dep-check --description "Checks given package names if there are pa
 			string split -f 2 --allow-empty ':'
 	end
 
+	function queryPackageName
+		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
+			string match -r "^$(string replace -a '*' '.*' -- $argv):.*\$" |\
+			string split -f 1 --allow-empty ':'
+	end
+
 	function queryAllPackages
 		set -f currentPackage (string split -f 1 ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" | string split -f 1 ':')
 		set -f currentVersions
@@ -146,6 +153,43 @@ function npm-dep-check --description "Checks given package names if there are pa
 		end
 	end
 
+	function processPackages
+		for package in $argv
+			if string match -qr -- "\*" $package
+				processPackageSearch $package
+				continue
+			end
+			set -l result (findPackageVersions $package)
+			set -l code $status
+			if test $code -eq 0
+				or begin
+					test $code -eq 1; and not set -q _flag_f; and not set -q _flag_o;
+				end
+				or begin
+					test $code -eq 2; and not set -q _flag_o
+				end
+				echo "$result[1]@$result[2]"
+			end
+		end
+	end
+
+	function processPackageSearch
+		set -l matcher (string match -r -g $__npmDepCheck_NPM_REGEX_MATCHER -- $argv)
+		set -l packageName $matcher[1]
+		set -l searchedVersions $matcher[2]
+		set -l foundPackages (queryPackageName $packageName)
+
+		set -l foundPackagesWithVersion
+		if test -n "$searchedVersions"
+			for p in $foundPackages
+				set -a foundPackagesWithVersion "$p@$searchedVersions"
+			end
+		else
+			set foundPackagesWithVersion $foundPackages
+		end
+		processPackages $foundPackagesWithVersion
+	end
+
 	#
 	# main
 	#
@@ -171,24 +215,13 @@ function npm-dep-check --description "Checks given package names if there are pa
 	or return $status
 
 	set -l packages (getPackages $argv)
-	for package in $packages
-		set -l result (findPackageVersions $package)
-		set -l code $status
-		if test $code -eq 0
-			or begin 
-				test $code -eq 1; and not set -q _flag_f; and not set -q _flag_o;
-			end
-			or begin 
-				test $code -eq 2; and not set -q _flag_o
-			end
-		echo "$result[1]@$result[2]"
-		end
-	end
 	if test (count $packages) -eq 0
 		for package in (queryAllPackages)
 			echo $package
 		end
+	else
+		processPackages $packages
 	end
 
-	set -e __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
+	set -e __npmDepCheck_NPM_REGEX_MATCHER __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 end
