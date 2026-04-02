@@ -13,6 +13,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 	#
 
 	set -g __npmDepCheck_hit (set_color --bold red)
+	set -g __npmDepCheck_version (set_color --bold green)
 	set -g __npmDepCheck_reset (set_color normal)
 	set -g __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 
@@ -76,18 +77,18 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 		# search for version matches
 		set -l returnCode 2
-		set -l coloredVersions
+		set -l matchedVersions
 		for foundVersion in $foundVersions
 			set -l entry
 			if contains -- $foundVersion $searchedVersions
-				set entry "$__npmDepCheck_hit$foundVersion (MATCH)$__npmDepCheck_reset"
+				set entry "$foundVersion (MATCH)"
 				set returnCode 0
 			else
 				set entry "$foundVersion"
 			end
-			set coloredVersions $coloredVersions $entry
+			set -a matchedVersions $entry
 		end
-		printfVersions $coloredVersions
+		printfVersions $matchedVersions
 		return $returnCode
 	end
 
@@ -105,18 +106,35 @@ function npm-dep-check --description "Checks given package names if there are pa
 			set -l matcher (string match -r -g "^([^:]+):(.*)\$" -- $line)
 			set -l packageName $matcher[1]
 			set -l packageVersion $matcher[2]
+			# sobald der aktuelle package name nicht mehr zusammenpasst mit dem gespeicherten
+			# gib alle gesammelten versionsnummern aus
 			if test "$currentPackage" != "$packageName"
-				echo "$currentPackage@$(string join ',' $currentVersions)"
+				echo "$currentPackage@$(printfVersions $currentVersions)"
 				set currentPackage $packageName
 				set currentVersions
 			end
 
-			set currentVersions $currentVersions $packageVersion
+			set -a currentVersions $packageVersion
 		end
 	end
 
 	function printfVersions
-		echo (string join ', ' -- $argv)
+		set -f coloredVersions (mapColorToVersion $argv | string split '\n')
+		echo (string join ',' -- $coloredVersions)
+	end
+
+	function mapColorToVersion
+		set -f coloredVersions
+		for v in $argv
+			set -l entry
+			if contains -- $v "(MATCH)"
+				set entry "$__npmDepCheck_hit$v$__npmDepCheck_reset"
+			else
+				set entry "$__npmDepCheck_version$v$__npmDepCheck_reset"
+			end
+			set -a coloredVersions $entry
+		end
+		echo (string join '\n' -- $coloredVersions)
 	end
 
 	function getPackages
