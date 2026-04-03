@@ -58,7 +58,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 		)
 
 		# remove duplicates and cache result
-		set __npmDepCheck_NPM_PACKAGE_LIST_CACHE (string split ' ' -- "$allDeps" | sort | uniq)
+		set __npmDepCheck_NPM_PACKAGE_LIST_CACHE (string split ' ' -- "$allDeps" | sort -u)
 		echo "Found dependencies: $(count $allDeps), unique $(count $__npmDepCheck_NPM_PACKAGE_LIST_CACHE)"
 	end
 
@@ -116,28 +116,26 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -f searchString "^$argv[1]:.*\$"
 
 		log_emit DEBUG "searchString: $searchString"
-		log_emit DEBUG "query result: $(string split ' ' -- $__npmDepCheck_NPM_PACKAGE_LIST_CACHE | string match -r -- $searchString)"
+		log_emit DEBUG "query result: $(string match -r -- $searchString $__npmDepCheck_NPM_PACKAGE_LIST_CACHE)"
 
-		string split ' ' -- $__npmDepCheck_NPM_PACKAGE_LIST_CACHE |\
-			string match -r -- $searchString |\
+		string match -r -- $searchString $__npmDepCheck_NPM_PACKAGE_LIST_CACHE |\
 			string split -f 2 --allow-empty ':'
 	end
 
 	function queryPackageName
 		set -f searchString "^$(string replace -a '*' '.*' -- $argv[1]):.*\$"
-		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
-			string match -r -- $searchString |\
+		string match -r -- $searchString $__npmDepCheck_NPM_PACKAGE_LIST_CACHE |\
 			string split -f 1 --allow-empty ':' |\
-			uniq
+			sort -u
 	end
 
 	# does the same as searching for wildcard *
 	# but is more efficient
 	function queryAllPackages
-		set -f currentPackage (string split -f 1 ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" | string split -f 1 ':')
+		set -f currentPackage (string split -f 1 ':' -- $__npmDepCheck_NPM_PACKAGE_LIST_CACHE[1])
 		set -f currentVersions
-		for line in (string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE")
-			set -l matcher (string split ':' -- $line)
+		for p in $__npmDepCheck_NPM_PACKAGE_LIST_CACHE
+			set -l matcher (string split ':' -- $p)
 			set -l packageName $matcher[1]
 			set -l packageVersion $matcher[2]
 			# collect versions until the current package name
