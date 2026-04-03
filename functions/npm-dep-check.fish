@@ -100,10 +100,33 @@ function npm-dep-check --description "Checks given package names if there are pa
 	end
 
 	function queryPackageName
+		set -f searchString "^$(string replace -a '*' '.*' -- $argv):.*\$"
 		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
-			string match -r "^$(string replace -a '*' '.*' -- $argv):.*\$" |\
+			string match -r $searchString |\
 			string split -f 1 --allow-empty ':' |\
 			uniq
+	end
+
+	# does the same as searching for wildcard *
+	# but is more efficient
+	function queryAllPackages
+		set -f currentPackage (string split -f 1 ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" | string split -f 1 ':')
+		set -f currentVersions
+		for line in (string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE")
+			set -l matcher (string match -r -g "^([^:]+):(.*)\$" -- $line)
+			set -l packageName $matcher[1]
+			set -l packageVersion $matcher[2]
+			# collect versions until the current package name
+			# does not match the saved one
+			# if this is true -> print all collected versions
+			if test "$currentPackage" != "$packageName"
+				echo "$currentPackage@$(printfVersions $currentVersions)"
+				set currentPackage $packageName
+				set currentVersions
+			end
+
+			set -a currentVersions $packageVersion
+		end
 	end
 
 	function printfVersions
@@ -185,7 +208,8 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	set -l packages $argv
 	if test (count $packages) -eq 0
-		set packages '*'
+		queryAllPackages
+		return
 	end
 
 	for result in (processPackages $packages)
