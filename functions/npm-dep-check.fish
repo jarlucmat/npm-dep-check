@@ -16,11 +16,26 @@ function npm-dep-check --description "Checks given package names if there are pa
 	set -g __npmDepCheck_version (set_color --bold green)
 	set -g __npmDepCheck_reset (set_color normal)
 	set -g __npmDepCheck_NPM_PACKAGE_LIST_CACHE
-	set -g __npmDepCheck_NPM_REGEX_MATCHER '^(.[^@]*)(?:@(.*))?$'
+	set -g __npmDepCheck_NPM_REGEX_MATCHER '^(.[^@]+)(?:@(.*))?$'
+	#set -g __npmDepCheck_LOG
 
 	###
 	### methods
 	###
+
+	function log_emit --argument-names level message
+		emit my_logger_event $level $message
+	end
+
+	function my_logger_handler --on-event my_logger_event
+		if not set -q __npmDepCheck_LOG
+			return
+		end
+		set -l level $argv[1]
+		set -l message $argv[2]
+
+		printf '[%s] %s\n' $level $message >&2
+	end
 
 	function initNpmCache
 		set -l npmJson (npm ls --all --json)
@@ -55,6 +70,10 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -l packageName $matcher[1]
 		set -l searchedVersions (string split ',' -- $matcher[2] | string trim)
 		set -l foundVersions (queryPackageVersions $packageName)
+
+		log_emit DEBUG "packageName: $packageName"
+		log_emit DEBUG "searchedVersions: $searchedVersions"
+		log_emit DEBUG "foundVersions: $foundVersions"
 
 		echo "$packageName"
 		if test -z "$foundVersions"
@@ -94,15 +113,20 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 	# query for given packageName
 	function queryPackageVersions
-		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
-			string match -r "^$argv:.*\$" |\
+		set -f searchString "^$argv[1]:.*\$"
+
+		log_emit DEBUG "searchString: $searchString"
+		log_emit DEBUG "query result: $(string split ' ' -- $__npmDepCheck_NPM_PACKAGE_LIST_CACHE | string match -r -- $searchString)"
+
+		string split ' ' -- $__npmDepCheck_NPM_PACKAGE_LIST_CACHE |\
+			string match -r -- $searchString |\
 			string split -f 2 --allow-empty ':'
 	end
 
 	function queryPackageName
-		set -f searchString "^$(string replace -a '*' '.*' -- $argv):.*\$"
+		set -f searchString "^$(string replace -a '*' '.*' -- $argv[1]):.*\$"
 		string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" |\
-			string match -r $searchString |\
+			string match -r -- $searchString |\
 			string split -f 1 --allow-empty ':' |\
 			uniq
 	end
@@ -113,7 +137,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 		set -f currentPackage (string split -f 1 ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE" | string split -f 1 ':')
 		set -f currentVersions
 		for line in (string split ' ' -- "$__npmDepCheck_NPM_PACKAGE_LIST_CACHE")
-			set -l matcher (string match -r -g "^([^:]+):(.*)\$" -- $line)
+			set -l matcher (string split ':' -- $line)
 			set -l packageName $matcher[1]
 			set -l packageVersion $matcher[2]
 			# collect versions until the current package name
@@ -184,7 +208,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 	### main
 	###
 
-	argparse 'f/found' 'o/only-matches' 'h/help' -- $argv
+	argparse 'f/found' 'o/only-matches' 'h/help' 'v/verbose' -- $argv
 	or return 1;
 
 	if set -q _flag_h;
@@ -194,6 +218,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo -e "\t -h, --help \t\t Display this page"
 		echo -e "\t -o, --only-matches \t Show only packages with matched version numbers"
 		echo -e "\t -f, --found \t\t Show only found packages"
+		echo -e "\t -v, --verbose \t\t Verbose output"
 		echo -e ""
 		echo -e "NPM PACKAGE NAMES"
 		echo -e "\t Can either be with or without version number like: typescript or typescript@1.0.0"
@@ -201,6 +226,10 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo -e "\t To find groups of packages it is possible to use * as wildcard: @angular/*@18. Wildcards only work for names, not version numbers"
 		echo -e ""
 		return
+	end
+
+	if set -q _flag_v
+		set -g __npmDepCheck_LOG
 	end
 
 	initNpmCache
@@ -235,5 +264,5 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo $result
 	end
 
-	set -e __npmDepCheck_NPM_REGEX_MATCHER __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
+	set -e __npmDepCheck_LOG __npmDepCheck_NPM_REGEX_MATCHER __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 end
