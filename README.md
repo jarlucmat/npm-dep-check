@@ -1,17 +1,16 @@
 # npm-dep-check
 
-A Fish shell utility to inspect your npm dependency tree and quickly check whether specific packages (and versions) are present.
-
-It traverses the full dependency graph (including transitive dependencies) and highlights matching versions directly in the output.
+A Fish shell tool to query your npm dependency tree for packages and versions. Unlike `npm ls`, it provides concise, one-line results, supports wildcard searches, and highlights matching versions—making it easy to see which versions of a package are used across your entire project (including transitive dependencies).
 
 ---
 
 ## ✨ Features
 
-* 🔍 Search for packages across the entire dependency tree (not just top-level)
+* 🔍 Search across the entire dependency tree (including transitive dependencies)
 * 📦 Supports exact and partial version matching
-* 🎯 Highlights matching versions for quick visibility
 * 🌐 Wildcard support for package name searches (e.g. `@angular/*`)
+* 📄 Concise one-line output per package
+* 🎯 Highlights matching versions for quick visibility
 * ⚡ Uses caching for fast repeated lookups
 * 🐚 Built specifically for Fish shell
 
@@ -49,7 +48,7 @@ typescript@5.4.5
 ### Check for a specific version
 
 ```fish
-npm-dep-check typescript@5                                                                                                                                              trunk ✱
+npm-dep-check typescript@5
 
 typescript@5.4.5 (MATCH)
 ```
@@ -57,7 +56,7 @@ typescript@5.4.5 (MATCH)
 ### Match multiple version patterns
 
 ```fish
-npm-dep-check typescript@5.2,5.4                                                                                                                                    ✘ 4 trunk ✱
+npm-dep-check typescript@5.2,5.4
 
 typescript@5.4.5 (MATCH)
 ```
@@ -83,7 +82,7 @@ npm-dep-check '@angular/*'
 ### Combine wildcard and version
 
 ```fish
-npm-dep-check "@angular/*@18"                                                                                                                                       ✘ 4 trunk ✱
+npm-dep-check "@angular/*@18"
 
 @angular/animations@18.0.0 (MATCH)
 @angular/build@18.0.1 (MATCH)
@@ -122,7 +121,7 @@ npm-dep-check "@angular/*@18"                                                   
 
 ## ⚠️ Notes
 
-* The script relies on a valid npm project. If `npm ls` fails, results may be incomplete.
+* The script requires a valid npm project. If `npm ls` fails, results may be incomplete.
 * Wildcards (`*`) are only supported for package names, not versions.
 * Version matching supports prefix patterns (e.g. `1` matches `1.x.x`).
 
@@ -133,3 +132,16 @@ npm-dep-check "@angular/*@18"                                                   
 ```fish
 fisher install jarlucmat/npm-dep-check
 ```
+
+---
+
+## 🔄 Compared to npm ls
+
+| Feature                  | npm ls | npm-dep-check |
+|--------------------------|--------|----------------|
+| Full dependency tree     | ✅     | ✅             |
+| Concise output           | ❌     | ✅             |
+| Wildcard search          | ❌     | ✅             |
+| Version pattern matching | ❌     | ✅             |
+| Highlighted matches      | ❌     | ✅             |
+
