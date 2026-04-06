@@ -10,7 +10,7 @@ function __npm_dep_check_mapColorToVersion
 	set -f coloredVersions
 	for v in $argv
 		set -l entry
-		if string match -qe -- "(MATCH)" $v
+		if string match -qr -- "\(MATCH\)" $v
 			set entry "$colorMatch$v$colorReset"
 		else
 			set entry "$colorVersion$v$colorReset"
