@@ -101,19 +101,8 @@ npm-dep-check '@angular/*@18'
 
 ## 📁 Installation
 
-You can either:
-
-### Option 1: Use as standalone script
-
 ```fish
-chmod +x npm-dep-check.fish
-./npm-dep-check.fish ...
-```
-
-### Option 2: Add as Fish function
-
-```fish
-cp npm-dep-check.fish ~/.config/fish/functions/npm-dep-check.fish
+fisher install jarlucmat/npm-dep-check
 ```
 
 ---
@@ -128,13 +117,5 @@ rxjs@7.8.1
 
 * `(MATCH)` indicates that the version matches your query
 * Colored output highlights matches and versions (if your terminal supports ANSI colors)
-
----
-
-## 🛠️ Future Ideas
-
-* JSON output mode for scripting
-* Optional persistent caching
-* Performance optimizations for very large projects
 
 ---
