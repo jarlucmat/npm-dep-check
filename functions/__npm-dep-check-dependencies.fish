@@ -1,5 +1,3 @@
-#!/usr/bin/env fish
-
 function __npm-dep-check-dependencies
     for dep in npm jq sort
         if not type -q $dep
