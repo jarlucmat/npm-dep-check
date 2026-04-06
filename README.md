@@ -1,4 +1,3 @@
-
 # npm-dep-check
 
 A Fish shell utility to inspect your npm dependency tree and quickly check whether specific packages (and versions) are present.
@@ -43,30 +42,60 @@ If no package is provided, all dependencies are listed.
 
 ```fish
 npm-dep-check typescript
+
+typescript@5.4.5
 ```
 
 ### Check for a specific version
 
 ```fish
-npm-dep-check typescript@5.0.0
+npm-dep-check typescript@5                                                                                                                                              trunk ✱
+
+typescript@5.4.5 (MATCH)
 ```
 
 ### Match multiple version patterns
 
 ```fish
-npm-dep-check typescript@5,4.9
+npm-dep-check typescript@5.2,5.4                                                                                                                                    ✘ 4 trunk ✱
+
+typescript@5.4.5 (MATCH)
 ```
 
 ### Search with wildcard
 
 ```fish
 npm-dep-check '@angular/*'
+
+@angular/animations@18.0.0
+@angular/build@18.0.1
+@angular/cli@18.0.1
+@angular/common@18.0.0
+@angular/compiler@18.0.0
+@angular/compiler-cli@18.0.0
+@angular/core@18.0.0
+@angular/forms@18.0.0
+@angular/platform-browser@18.0.0
+@angular/platform-browser-dynamic@18.0.0
+@angular/router@18.0.0
 ```
 
 ### Combine wildcard and version
 
 ```fish
-npm-dep-check '@angular/*@18'
+npm-dep-check "@angular/*@18"                                                                                                                                       ✘ 4 trunk ✱
+
+@angular/animations@18.0.0 (MATCH)
+@angular/build@18.0.1 (MATCH)
+@angular/cli@18.0.1 (MATCH)
+@angular/common@18.0.0 (MATCH)
+@angular/compiler@18.0.0 (MATCH)
+@angular/compiler-cli@18.0.0 (MATCH)
+@angular/core@18.0.0 (MATCH)
+@angular/forms@18.0.0 (MATCH)
+@angular/platform-browser@18.0.0 (MATCH)
+@angular/platform-browser-dynamic@18.0.0 (MATCH)
+@angular/router@18.0.0 (MATCH)
 ```
 
 ---
@@ -104,18 +133,3 @@ npm-dep-check '@angular/*@18'
 ```fish
 fisher install jarlucmat/npm-dep-check
 ```
-
----
-
-## 💡 Example Output
-
-```text
-typescript@5.4.2
-@angular/core@18.0.0 (MATCH)
-rxjs@7.8.1
-```
-
-* `(MATCH)` indicates that the version matches your query
-* Colored output highlights matches and versions (if your terminal supports ANSI colors)
-
----
