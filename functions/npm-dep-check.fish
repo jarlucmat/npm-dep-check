@@ -12,9 +12,6 @@ function npm-dep-check --description "Checks given package names if there are pa
 	### global variables
 	###
 
-	set -g __npmDepCheck_hit (set_color --bold red)
-	set -g __npmDepCheck_version (set_color --bold green)
-	set -g __npmDepCheck_reset (set_color normal)
 	set -g __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 	set -g __npmDepCheck_NPM_REGEX_MATCHER '^(.[^@]+)(?:@(.*))?$'
 	#set -g __npmDepCheck_LOG
@@ -59,7 +56,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 		# remove duplicates and cache result
 		set __npmDepCheck_NPM_PACKAGE_LIST_CACHE (string split ' ' -- "$allDeps" | sort -u)
-		echo "Found dependencies: $(count $allDeps), unique $(count $__npmDepCheck_NPM_PACKAGE_LIST_CACHE)"
+		printf 'Found dependencies: %s, unique %s\n' (count $allDeps) (count $__npmDepCheck_NPM_PACKAGE_LIST_CACHE) >&2
 	end
 
 	function findPackageVersions
@@ -157,13 +154,16 @@ function npm-dep-check --description "Checks given package names if there are pa
 	end
 
 	function mapColorToVersion
+		set -f colorMatch (set_color --bold red)
+		set -f colorVersion (set_color --bold green)
+		set -f colorReset (set_color normal)
 		set -f coloredVersions
 		for v in $argv
 			set -l entry
 			if string match -qe -- "(MATCH)" $v
-				set entry "$__npmDepCheck_hit$v$__npmDepCheck_reset"
+				set entry "$colorMatch$v$colorReset"
 			else
-				set entry "$__npmDepCheck_version$v$__npmDepCheck_reset"
+				set entry "$colorVersion$v$colorReset"
 			end
 			set -a coloredVersions $entry
 		end
@@ -262,5 +262,5 @@ function npm-dep-check --description "Checks given package names if there are pa
 		echo $result
 	end
 
-	set -e __npmDepCheck_LOG __npmDepCheck_NPM_REGEX_MATCHER __npmDepCheck_version __npmDepCheck_hit __npmDepCheck_reset __npmDepCheck_NPM_PACKAGE_LIST_CACHE
+	set -e __npmDepCheck_LOG __npmDepCheck_NPM_REGEX_MATCHER __npmDepCheck_NPM_PACKAGE_LIST_CACHE
 end
