@@ -1,5 +1,5 @@
 function __npm_dep_check_printfVersions
-	set -f coloredVersions (__npm_dep_check_mapColorToVersion $argv | string split '\n')
+	set -f coloredVersions (__npm_dep_check_mapColorToVersion $argv)
 	echo (string join ',' -- $coloredVersions)
 end
 
@@ -17,5 +17,5 @@ function __npm_dep_check_mapColorToVersion
 		end
 		set -a coloredVersions $entry
 	end
-	echo (string join '\n' -- $coloredVersions)
+	printf $coloredVersions
 end
