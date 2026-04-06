@@ -146,6 +146,11 @@ function npm-dep-check --description "Checks given package names if there are pa
 
 			set -a currentVersions $packageVersion
 		end
+
+		# last run
+		if test -n "$currentPackage"
+			echo "$currentPackage@$(printfVersions $currentVersions)"
+		end
 	end
 
 	function printfVersions
