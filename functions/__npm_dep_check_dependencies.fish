@@ -1,4 +1,4 @@
-function __npm-dep-check-dependencies
+function __npm_dep_check_dependencies
     for dep in npm jq sort
         if not type -q $dep
             printf "%s: missing dependency: %s\n" (status current-function) $dep >&2

@@ -8,7 +8,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 	###
 	### dependency check
 	###
-	__npm-dep-check-dependencies
+	__npm_dep_check_dependencies
 	or return $status
 
 	###
