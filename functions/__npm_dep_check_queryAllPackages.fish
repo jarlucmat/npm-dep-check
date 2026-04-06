@@ -20,7 +20,5 @@ function __npm_dep_check_queryAllPackages
 	end
 
 	# last run
-	if test -n "$currentPackage"
-		string join '@' -- $currentPackage (__npm_dep_check_printfVersions $currentVersions)
-	end
+	string join '@' -- $currentPackage (__npm_dep_check_printfVersions $currentVersions)
 end
