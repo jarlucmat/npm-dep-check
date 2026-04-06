@@ -10,8 +10,8 @@ function __npm_dep_check_processPackage
 		__npm_dep_check_processPackageSearch $package
 		return
 	end
-	set -l result (__npm_dep_check_findPackageVersions $package)
-	string join '@' -- $result[1] $result[2]
+
+	__npm_dep_check_findPackageVersions $package
 end
 
 function __npm_dep_check_processPackageSearch
