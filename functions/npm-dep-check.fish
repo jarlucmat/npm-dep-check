@@ -16,7 +16,7 @@ function npm-dep-check --description "Checks given package names if there are pa
 	###
 
 	set -g __npmDepCheck_NPM_PACKAGE_LIST_CACHE
-	set -g __npmDepCheck_NPM_REGEX_MATCHER '^((?:@[^@]+)|([^@]+))(?:@(.*))?$'
+	set -g __npmDepCheck_NPM_REGEX_MATCHER '^(@?[^@]+)(?:@(.*))?$'
 	#set -g __npmDepCheck_LOG
 
 
