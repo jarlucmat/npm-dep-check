@@ -17,5 +17,5 @@ function __npm_dep_check_mapColorToVersion
 		end
 		set -a coloredVersions $entry
 	end
-	printf $coloredVersions
+	string join -- \n $coloredVersions
 end
