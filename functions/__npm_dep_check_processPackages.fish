@@ -20,6 +20,9 @@ function __npm_dep_check_processPackageSearch
 	set -l searchedVersions $matcher[2]
 	set -l foundPackages (__npm_dep_check_queryPackageName $packageName)
 
+	__npm_dep_check_log __npm_dep_check_processPackageSearch "matcher: $matcher"
+	__npm_dep_check_log __npm_dep_check_processPackageSearch "foundPackages: $foundPackages"
+
 	set -l foundPackagesWithOptionalVersion $foundPackages
 	if test -n "$searchedVersions"
 		set foundPackagesWithOptionalVersion
